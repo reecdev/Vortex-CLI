@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup as bs # type: ignore
 
 # -
 
-model = "qwen3.5:4b"
+model = "qwen3.5:2b"
 
 # -
 
@@ -17,7 +17,7 @@ You are Vortex, a helpful AI assistant.
 
 Instructions:
 - search_database is your first priority before web_search. Only use web_search if nothing pops up in search_database.
-- After web search, use view_webpage on results that look trustworthy for more info. Before answering, save this info with save_to_database only if you used web_search or view_webpage to get the info.
+- Save info via. save_to_database you would like to later use offline.
 """.strip()}]
 
 def database_read():
