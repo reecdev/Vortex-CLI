@@ -128,6 +128,7 @@ def chat(messages):
     while finished == False:
         print("")
         hasContent = False
+        thought = False
         ou = ""
         toolCalls = []
         stream = ollama.chat(model=model, messages=messages, tools=tool_registry2, stream=True)
@@ -135,10 +136,11 @@ def chat(messages):
             ch = chunk["message"]
 
             if ch.get("thinking"):
+                thought = True
                 print(f"\033[3m\033[90m{ch['thinking']}\033[0m", end="", flush=True)
 
             if ch.get("content"):
-                if hasContent == False:
+                if hasContent == False and thought == True:
                     print("\n\n")
                 hasContent = True
                 ou += ch["content"]
