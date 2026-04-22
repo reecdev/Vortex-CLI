@@ -1,24 +1,26 @@
 import ollama
 import requests
-import json
 import os
-from bs4 import BeautifulSoup as bs # type: ignore
+import json
+from bs4 import BeautifulSoup as bs
 
 # -
 
-model = "qwen3.5:2b"
+model = "qwen3.5:4b"
 
 # -
 
-tool_registry = {}
-tool_registry2 = []
-messages = [{"role": "system", "content": """
-You are Vortex, a helpful AI assistant.
+def memory_read():
+    if not os.path.exists("memory.md"):
+        return {}
+    
+    with open("memory.md", "r") as f:
+        t = f.read()
+        return t if len(t) > 1 else "No memories yet."
 
-Instructions:
-- search_database is your first priority before web_search. Only use web_search if nothing pops up in search_database.
-- Save info via. save_to_database you would like to later use offline.
-""".strip()}]
+def memory_write(memory):
+    with open("memory.md", "a") as f:
+        f.write("- "+memory+"\n")
 
 def database_read():
     if not os.path.exists("knowledge.json"):
@@ -36,6 +38,23 @@ def database_write():
         json.dump(database, f, indent=4)
 
 database = database_read()
+
+tool_registry = {}
+tool_registry2 = []
+messages = [{"role": "system", "content": f"""
+You are Vortex, a helpful AI assistant.
+
+Instructions:
+- Use save_memory to save user preferences and info about the user. These memories should be 1-2 sentences long. Only save *useful* memories, such as names, info about their life, workplaces, rules the user wants you to follow. Example of a useful memory worth saving: 'User owns a dog named Buddy.' Example of a useless memory you should never save: 'User asked me to summarize the text.'
+- search_database is your first priority before web_search. Only use web_search if nothing pops up in search_database.
+- Save only *useful* info via. save_to_database you would like to later use offline. Useful info includes: Documentation of services, info on how to use a library or a piece of code, facts about a topic, etc.
+- Remember that save_memory is for short memories about the user and has a character limit of 300 characters per memory (only enough for 1 sentence). save_to_database is for saving real, important, detailed info about subjects and has no character limit.
+- When the user asks for you to "pre-research" a topic, they want you to do the following: 1. Research about the topic with multiple web searches and view_webpages. 2. Save detailed info about it to save_to_database. 3. Confirm that you have pre-researched.
+- Never mention *anything* about memory or database in your replies to the user.
+
+Memories about the user so far:
+{memory_read()}
+""".strip()}]
 
 def tool(func_or_name=None):
     def decorator(func):
@@ -92,7 +111,12 @@ def view_webpage(url: str):
         return s.get_text(separator="\n", strip=True)
     except:
         return "<h1>422</h1>\n<p>error 422: Try again later. Move on to a different page.</p>"
-    
+
+@tool
+def save_memory(memory: str):
+    memory_write(memory)
+    return "Saved memory."
+
 @tool
 def search_database(keyword: str, threshold: int = 5):
     global database
@@ -154,10 +178,13 @@ def chat(messages):
             if toolcall.function.name in tool_registry:
                 print(f"\033[3m\033[32mCalled tool: {toolcall.function.name}\033[0m")
                 messages.append({"role": "tool", "content": tool_registry[toolcall.function.name](**toolcall.function.arguments)})
+                ou = ""
         if ou != "":
             finished = ou
 
 # -
+
+os.system('cls' if os.name == 'nt' else 'clear')
 
 print(f"Vortex v1 | Running with model: {model}\n")
 
