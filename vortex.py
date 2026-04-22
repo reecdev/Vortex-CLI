@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup as bs
 
 # -
 
-model = "qwen3.5:2b"
+model = "qwen3.5:4b"
 
 # -
 
@@ -108,7 +108,7 @@ def view_webpage(url: str):
         s = bs(fetch(url), features="html.parser")
         for i in s(["script", "style", "meta", "img", "input", "textarea"]):
             i.decompose()
-        return s.get_text(separator="\n", strip=True)
+        return s.get_text(separator="\n", strip=True)[:1000]
     except:
         return "<h1>422</h1>\n<p>error 422: Try again later. Move on to a different page.</p>"
 
@@ -160,15 +160,17 @@ def chat(messages):
             ch = chunk["message"]
 
             if ch.get("thinking"):
-                thought = True
-                print(f"\033[3m\033[90m{ch['thinking']}\033[0m", end="", flush=True)
+                if ch["thinking"].strip():
+                    thought = True
+                    print(f"\033[3m\033[90m{ch['thinking']}\033[0m", end="", flush=True)
 
             if ch.get("content"):
                 if hasContent == False and thought == True:
                     print("\n\n")
-                hasContent = True
-                ou += ch["content"]
-                print(ch["content"], end="", flush=True)
+                if ch["content"].strip():
+                    hasContent = True
+                    ou += ch["content"]
+                    print(ch["content"], end="", flush=True)
 
             if ch.get("tool_calls"):
                 toolCalls.extend(ch["tool_calls"])
