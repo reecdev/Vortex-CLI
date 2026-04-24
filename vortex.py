@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup as bs
 
 # -
 
-model = "qwen3.5:4b"
+model = "qwen3.5:9b"
 
 # -
 
